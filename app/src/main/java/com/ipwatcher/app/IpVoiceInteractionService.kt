@@ -40,7 +40,7 @@ class IpVoiceInteractionService : VoiceInteractionService() {
             }
             val args = Bundle()
             args.putBoolean(IpVoiceInteractionSession.ARG_ENABLE, enable)
-            service.showSession(args, 0)
+            service.showSession(args, android.service.voice.VoiceInteractionSession.SHOW_WITH_ASSIST)
             android.util.Log.d("IpWatcher", "showSession($enable) called")
             return true
         }
