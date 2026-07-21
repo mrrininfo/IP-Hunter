@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">IP Watcher</string>
+    <string name="tile_label">IP Watcher</string>
+</resources>
