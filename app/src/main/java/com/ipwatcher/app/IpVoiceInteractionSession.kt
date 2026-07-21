@@ -17,8 +17,16 @@ class IpVoiceInteractionSession(context: Context) : VoiceInteractionSession(cont
         private const val TAG = "IpWatcher"
     }
 
-    // Không tạo UI hiển thị cho phiên trợ lý này
-    override fun onCreateContentView(): View? = null
+    // Trả về một View thật (1x1px, trong suốt) thay vì null.
+    // Một số thiết bị có thể coi session không có cửa sổ nào là "không hợp lệ"
+    // và từ chối thực hiện hành động rủi ro (mất toàn bộ kết nối mạng nếu
+    // không còn Wi-Fi dự phòng), kể cả khi không có gì hiển thị rõ trên màn hình.
+    override fun onCreateContentView(): View {
+        return View(context).apply {
+            layoutParams = android.widget.FrameLayout.LayoutParams(1, 1)
+            setBackgroundColor(android.graphics.Color.TRANSPARENT)
+        }
+    }
 
     override fun onShow(args: Bundle?, showFlags: Int) {
         super.onShow(args, showFlags)
@@ -43,9 +51,9 @@ class IpVoiceInteractionSession(context: Context) : VoiceInteractionSession(cont
             Log.e(TAG, "startVoiceActivity failed", e)
         }
 
-        // Không đóng session ngay lập tức - nhường thời gian cho hệ thống xử lý
-        // xong Intent trước khi phiên bị huỷ. Đóng quá sớm có thể khiến lệnh
-        // chưa kịp thực thi bị hủy giữa đường trên một số thiết bị.
-        Handler(Looper.getMainLooper()).postDelayed({ hide() }, 1500L)
+        // Chờ lâu hơn trước khi đóng session - việc tắt sóng di động (khác Wi-Fi)
+        // có thể cần nhiều thời gian xử lý hơn hoặc cần cửa sổ session tồn tại
+        // lâu hơn để hệ thống coi là hợp lệ.
+        Handler(Looper.getMainLooper()).postDelayed({ hide() }, 6000L)
     }
 }
