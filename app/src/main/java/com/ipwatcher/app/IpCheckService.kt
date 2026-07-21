@@ -62,7 +62,7 @@ class IpCheckService : Service() {
 
                 when {
                     ip == null -> {
-                        updateNotification("Không lấy được IP, thử lại…")
+                        updateNotification("⚠️ Không lấy được IP (có thể do VPN chặn) - thử lại sau ${Prefs.getCheckIntervalSec(this@IpCheckService)}s")
                     }
                     isMatch -> {
                         updateNotification("IP hiện tại: $ip (khớp) ✅")
@@ -95,21 +95,31 @@ class IpCheckService : Service() {
     }
 
     private fun fetchPublicIp(): String? {
-        return try {
-            val url = URL("https://api.ipify.org")
-            val conn = url.openConnection() as HttpURLConnection
-            conn.connectTimeout = 5000
-            conn.readTimeout = 5000
-            conn.requestMethod = "GET"
-            val code = conn.responseCode
-            if (code == 200) {
-                conn.inputStream.bufferedReader().readText().trim()
-            } else {
-                null
+        val urls = listOf(
+            "https://api.ipify.org",
+            "https://ifconfig.me/ip",
+            "https://icanhazip.com"
+        )
+        for (u in urls) {
+            try {
+                val url = URL(u)
+                val conn = url.openConnection() as HttpURLConnection
+                conn.connectTimeout = 5000
+                conn.readTimeout = 5000
+                conn.requestMethod = "GET"
+                val code = conn.responseCode
+                if (code == 200) {
+                    val result = conn.inputStream.bufferedReader().readText().trim()
+                    android.util.Log.d("IpWatcher", "fetchPublicIp OK via $u -> $result")
+                    return result
+                } else {
+                    android.util.Log.w("IpWatcher", "fetchPublicIp $u trả về mã $code")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("IpWatcher", "fetchPublicIp $u lỗi: ${e.message}")
             }
-        } catch (e: Exception) {
-            null
         }
+        return null
     }
 
     private fun stopSelfService() {
